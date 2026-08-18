@@ -348,9 +348,9 @@ class MainActivity : HelperBaseComponentActivity() {
             EConfigType.SHADOWSOCKS.value -> Intent(this, ServerShadowsocksActivity::class.java)
             EConfigType.SOCKS.value -> Intent(this, ServerSocksActivity::class.java)
             EConfigType.HTTP.value -> Intent(this, ServerHttpActivity::class.java)
-            EConfigType.TROJAN.value -> Intent(this, ServerTrojanActivity::class.java)
+            EConfigType.TROJAN.value -> Intent(this, ServerTrojoanActivity::class.java)
             EConfigType.WIREGUARD.value -> Intent(this, ServerWireguardActivity::class.java)
-            EConfigType.HYSTERIA2 -> Intent(this, ServerHysteria2Activity::class.java)
+            EConfigType.HYSTERIA2.value -> Intent(this, ServerHysteria2Activity::class.java)
             else -> Intent(this, ServerHttpActivity::class.java).apply {
                 putExtra("createConfigType", createConfigType)
             }
