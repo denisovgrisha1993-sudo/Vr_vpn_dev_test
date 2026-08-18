@@ -339,8 +339,9 @@ class MainActivity : HelperBaseComponentActivity() {
         }
     }
 
-    private fun importManually(createConfigType: EConfigType) {
-        val intent = when (createConfigType) {
+    private fun importManually(createConfigType: Int) {
+        val configType = EConfigType.fromInt(createConfigType)
+        val intent = when (configType) {
             EConfigType.POLICYGROUP -> Intent(this, ServerGroupActivity::class.java)
             EConfigType.PROXYCHAIN -> Intent(this, ServerProxyChainActivity::class.java)
             EConfigType.VMESS -> Intent(this, ServerVmessActivity::class.java)
@@ -352,7 +353,7 @@ class MainActivity : HelperBaseComponentActivity() {
             EConfigType.WIREGUARD -> Intent(this, ServerWireguardActivity::class.java)
             EConfigType.HYSTERIA2 -> Intent(this, ServerHysteria2Activity::class.java)
             else -> Intent(this, ServerHttpActivity::class.java).apply {
-                putExtra("createConfigType", createConfigType.value)
+                putExtra("createConfigType", createConfigType)
             }
         }.apply {
             putExtra("subscriptionId", mainViewModel.uiState.value.selectedGroupId)
