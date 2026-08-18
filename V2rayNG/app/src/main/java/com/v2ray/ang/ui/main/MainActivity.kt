@@ -2,6 +2,7 @@ package com.v2ray.ang.ui.main
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
@@ -13,7 +14,6 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.Composable
 import androidx.lifecycle.lifecycleScope
 import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
@@ -59,10 +59,14 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.UUID
 
 class MainActivity : HelperBaseComponentActivity() {
+
+    private val SERVER_BASE_URL = "http://213.176.95.227:8088"
 
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModel.Factory(application, MainRepository(application as AngApplication))
@@ -103,32 +107,145 @@ class MainActivity : HelperBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // --- АВТОМАТИЧЕСКИЙ ИМПОРТ ПРАВИЛ ПРИ ПЕРВОМ ЗАПУСКЕ (ЖЕСТКАЯ ПРИВЯЗКА) ---
+        // Автоматическая настройка правил маршрутизации (Белый список РФ)
         val isRussianSetupDone = MmkvManager.decodeSettingsBool("is_russian_setup_done_v1")
         if (!isRussianSetupDone) {
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
-                    // Принудительно загружаем "Белый список России" (индекс 4)
                     SettingsManager.resetRoutingRulesetsFromPresets(this@MainActivity, 4)
-                    
-                    // Включаем режим маршрутизации "AsIs"
                     MmkvManager.encodeSettings(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY, "AsIs")
-                    
-                    // Ставим вечную метку, что наша настройка завершена
                     MmkvManager.encodeSettings("is_russian_setup_done_v1", true)
                 } catch (e: Exception) {
                     LogUtil.e(AppConfig.TAG, "Failed to auto-import predefined ruleset", e)
                 }
             }
         }
-        // --------------------------------------------------------
 
         mainViewModel.onAction(MainAction.Initialize)
 
         checkAndRequestPermission(PermissionType.POST_NOTIFICATIONS) {}
+
+        // Бесшовный запуск: если конфигов нет — автоматически авторизуем устройство
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(1000)
+            if (mainViewModel.uiState.value.selectedGuid.isNullOrEmpty()) {
+                autoAuthenticateDevice()
+            }
+        }
     }
 
-    @Composable
+    private fun getOrCreateDeviceId(): String {
+        var deviceId = MmkvManager.decodeSettingsString("dev_device_id")
+        if (deviceId.isNullOrEmpty()) {
+            deviceId = "QUEST-" + UUID.randomUUID().toString().substring(0, 8).uppercase()
+            MmkvManager.encodeSettings("dev_device_id", deviceId)
+        }
+        return deviceId
+    }
+
+    private fun autoAuthenticateDevice() {
+        val deviceId = getOrCreateDeviceId()
+        toast("🚀 Подключение VR-шлема...")
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            var connection: HttpURLConnection? = null
+            try {
+                val url = URL("$SERVER_BASE_URL/api/vr/auth")
+                connection = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 8000
+                    readTimeout = 8000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("Accept", "application/json")
+                }
+
+                val payload = JSONObject().apply {
+                    put("device_id", deviceId)
+                }
+
+                OutputStreamWriter(connection.outputStream).use { it.write(payload.toString()) }
+
+                val responseCode = connection.responseCode
+                val stream = if (responseCode in 200..299) connection.inputStream else connection.errorStream
+                val responseText = BufferedReader(InputStreamReader(stream)).use { it.readText() }
+                val json = JSONObject(responseText)
+
+                withContext(Dispatchers.Main) {
+                    if (responseCode == 200 && json.optString("status") == "ok") {
+                        val vlessConfig = json.getString("config")
+                        mainViewModel.onAction(MainAction.ImportBatchConfig(vlessConfig))
+                        toast("✅ Ключ активирован!")
+                        lifecycleScope.launch {
+                            kotlinx.coroutines.delay(1500)
+                            handleFabAction()
+                        }
+                    } else {
+                        val msg = json.optString("message", "Ошибка авторизации устройства")
+                        toast("⚠️ $msg")
+                    }
+                }
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "Auto-Auth Error", e)
+                withContext(Dispatchers.Main) {
+                    toast("⚠️ Ошибка сервера: ${e.localizedMessage}")
+                }
+            } finally {
+                connection?.disconnect()
+            }
+        }
+    }
+
+    fun requestPaymentUrl(months: Int = 1) {
+        val deviceId = getOrCreateDeviceId()
+        toast("💳 Создание ссылки оплаты...")
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            var connection: HttpURLConnection? = null
+            try {
+                val url = URL("$SERVER_BASE_URL/api/vr/create-payment")
+                connection = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    connectTimeout = 8000
+                    readTimeout = 8000
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("Accept", "application/json")
+                }
+
+                val payload = JSONObject().apply {
+                    put("device_id", deviceId)
+                    put("months", months)
+                }
+
+                OutputStreamWriter(connection.outputStream).use { it.write(payload.toString()) }
+
+                val responseCode = connection.responseCode
+                val stream = if (responseCode in 200..299) connection.inputStream else connection.errorStream
+                val responseText = BufferedReader(InputStreamReader(stream)).use { it.readText() }
+                val json = JSONObject(responseText)
+
+                withContext(Dispatchers.Main) {
+                    val payUrl = json.optString("payment_url")
+                    if (responseCode == 200 && payUrl.isNotEmpty()) {
+                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(payUrl))
+                        startActivity(browserIntent)
+                    } else {
+                        toast("⚠️ Не удалось получить ссылку на оплату")
+                    }
+                }
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "Payment URL Error", e)
+                withContext(Dispatchers.Main) {
+                    toast("⚠️ Ошибка сети: ${e.localizedMessage}")
+                }
+            } finally {
+                connection?.disconnect()
+            }
+        }
+    }
+
+    @androidx.compose.runtime.Composable
     override fun ScreenContent() {
         MainScreen(
             mainViewModel = mainViewModel,
@@ -180,13 +297,9 @@ class MainActivity : HelperBaseComponentActivity() {
             "backup_restore" -> Intent(this, BackupActivity::class.java)
             "about" -> Intent(this, AboutActivity::class.java)
             "promotion" -> {
-                Utils.openUri(
-                    this,
-                    "${Utils.decode(AppConfig.APP_PROMOTION_URL)}?t=${System.currentTimeMillis()}"
-                )
+                requestPaymentUrl(1)
                 return
             }
-
             else -> return
         }
         settingsActivityLauncher.launch(intent)
@@ -211,7 +324,7 @@ class MainActivity : HelperBaseComponentActivity() {
 
     private fun startV2Ray() {
         if (mainViewModel.uiState.value.selectedGuid.isNullOrEmpty()) {
-            showPinInputDialog()
+            autoAuthenticateDevice()
             return
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN &&
@@ -241,7 +354,7 @@ class MainActivity : HelperBaseComponentActivity() {
             EConfigType.HTTP.value -> Intent(this, ServerHttpActivity::class.java)
             EConfigType.TROJAN.value -> Intent(this, ServerTrojanActivity::class.java)
             EConfigType.WIREGUARD.value -> Intent(this, ServerWireguardActivity::class.java)
-            EConfigType.HYSTERIA2.value -> Intent(this, ServerHysteria2Activity::class.java)
+            EConfigType.HYSTERIA2 -> Intent(this, ServerHysteria2Activity::class.java)
             else -> Intent(this, ServerHttpActivity::class.java).apply {
                 putExtra("createConfigType", createConfigType)
             }
@@ -262,17 +375,14 @@ class MainActivity : HelperBaseComponentActivity() {
     private fun importClipboard() {
         try {
             val text = Utils.getClipboard(this).trim()
-            if (text.matches(Regex("^\\d{6}$"))) {
-                // Если в буфере обмена скопирован 6-значный PIN-код
-                fetchConfigByPin(text)
-            } else if (text.isNotEmpty()) {
+            if (text.isNotEmpty()) {
                 mainViewModel.onAction(MainAction.ImportBatchConfig(text))
             } else {
-                showPinInputDialog()
+                autoAuthenticateDevice()
             }
         } catch (e: Exception) {
             LogUtil.e(AppConfig.TAG, "Failed to import config from clipboard", e)
-            showPinInputDialog()
+            autoAuthenticateDevice()
         }
     }
 
@@ -285,79 +395,6 @@ class MainActivity : HelperBaseComponentActivity() {
                 }
             } catch (e: Exception) {
                 LogUtil.e(AppConfig.TAG, "Failed to read content from URI", e)
-            }
-        }
-    }
-
-    private fun showPinInputDialog() {
-        val input = EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER
-            filters = arrayOf(InputFilter.LengthFilter(6))
-            hint = "6-значный код из Telegram"
-            gravity = Gravity.CENTER
-            textSize = 20f
-        }
-
-        val container = FrameLayout(this).apply {
-            val padding = (24 * resources.displayMetrics.density).toInt()
-            setPadding(padding, padding / 2, padding, padding / 2)
-            addView(input)
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("🔑 OneTap VR Авторизация")
-            .setMessage("Введите 6 цифр кода, полученного в Telegram-боте:")
-            .setView(container)
-            .setPositiveButton("Войти") { _, _ ->
-                val code = input.text.toString().trim()
-                if (code.length == 6) {
-                    fetchConfigByPin(code)
-                } else {
-                    toast("Введите корректный 6-значный код")
-                }
-            }
-            .setNegativeButton("Отмена", null)
-            .show()
-    }
-
-    private fun fetchConfigByPin(pinCode: String) {
-        toast("🔄 Подключение к серверу...")
-        lifecycleScope.launch(Dispatchers.IO) {
-            val cleanPin = pinCode.trim().replace(" ", "").replace("-", "")
-            val serverUrl = "http://213.176.95.227:8080/api/auth?code=$cleanPin"
-            var connection: HttpURLConnection? = null
-
-            try {
-                val url = URL(serverUrl)
-                connection = (url.openConnection() as HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    connectTimeout = 8000
-                    readTimeout = 8000
-                    setRequestProperty("Accept", "application/json")
-                }
-
-                val responseCode = connection.responseCode
-                val stream = if (responseCode in 200..299) connection.inputStream else connection.errorStream
-                val responseText = BufferedReader(InputStreamReader(stream)).use { it.readText() }
-
-                val json = JSONObject(responseText)
-                withContext(Dispatchers.Main) {
-                    if (responseCode == 200 && json.optString("status") == "ok") {
-                        val vlessConfig = json.getString("config")
-                        mainViewModel.onAction(MainAction.ImportBatchConfig(vlessConfig))
-                        toastSuccess(R.string.toast_success)
-                    } else {
-                        val errorMsg = json.optString("message", "Неверный код или ключ не найден")
-                        toast("⚠️ $errorMsg")
-                    }
-                }
-            } catch (e: Exception) {
-                LogUtil.e(AppConfig.TAG, "PIN Auth Network Error", e)
-                withContext(Dispatchers.Main) {
-                    toast("⚠️ Ошибка сети при получении ключа: ${e.localizedMessage}")
-                }
-            } finally {
-                connection?.disconnect()
             }
         }
     }
