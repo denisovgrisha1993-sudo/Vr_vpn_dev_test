@@ -339,20 +339,20 @@ class MainActivity : HelperBaseComponentActivity() {
         }
     }
 
-    private fun importManually(createConfigType: Int) {
+    private fun importManually(createConfigType: EConfigType) {
         val intent = when (createConfigType) {
-            EConfigType.POLICYGROUP.value -> Intent(this, ServerGroupActivity::class.java)
-            EConfigType.PROXYCHAIN.value -> Intent(this, ServerProxyChainActivity::class.java)
-            EConfigType.VMESS.value -> Intent(this, ServerVmessActivity::class.java)
-            EConfigType.VLESS.value -> Intent(this, ServerVlessActivity::class.java)
-            EConfigType.SHADOWSOCKS.value -> Intent(this, ServerShadowsocksActivity::class.java)
-            EConfigType.SOCKS.value -> Intent(this, ServerSocksActivity::class.java)
-            EConfigType.HTTP.value -> Intent(this, ServerHttpActivity::class.java)
-            EConfigType.TROJAN.value -> Intent(this, ServerTrojoanActivity::class.java)
-            EConfigType.WIREGUARD.value -> Intent(this, ServerWireguardActivity::class.java)
-            EConfigType.HYSTERIA2.value -> Intent(this, ServerHysteria2Activity::class.java)
+            EConfigType.POLICYGROUP -> Intent(this, ServerGroupActivity::class.java)
+            EConfigType.PROXYCHAIN -> Intent(this, ServerProxyChainActivity::class.java)
+            EConfigType.VMESS -> Intent(this, ServerVmessActivity::class.java)
+            EConfigType.VLESS -> Intent(this, ServerVlessActivity::class.java)
+            EConfigType.SHADOWSOCKS -> Intent(this, ServerShadowsocksActivity::class.java)
+            EConfigType.SOCKS -> Intent(this, ServerSocksActivity::class.java)
+            EConfigType.HTTP -> Intent(this, ServerHttpActivity::class.java)
+            EConfigType.TROJAN -> Intent(this, ServerTrojanActivity::class.java)
+            EConfigType.WIREGUARD -> Intent(this, ServerWireguardActivity::class.java)
+            EConfigType.HYSTERIA2 -> Intent(this, ServerHysteria2Activity::class.java)
             else -> Intent(this, ServerHttpActivity::class.java).apply {
-                putExtra("createConfigType", createConfigType)
+                putExtra("createConfigType", createConfigType.value)
             }
         }.apply {
             putExtra("subscriptionId", mainViewModel.uiState.value.selectedGroupId)
