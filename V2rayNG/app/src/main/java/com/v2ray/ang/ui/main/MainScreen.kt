@@ -24,7 +24,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -81,7 +80,6 @@ fun MainScreen(
 
     var locateInProgress by remember { mutableStateOf(false) }
 
-    // Настройка плавного скролла с инерцией
     val scrollState = rememberScrollState()
     val smoothFlingBehavior = ScrollableDefaults.flingBehavior()
 
@@ -205,7 +203,7 @@ fun MainScreen(
         }
     ) {
         Scaffold(
-            containerColor = Color(0xFF07080A),
+            containerColor = Color(0xFF090B1E),
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {
                 MainTopBar(
@@ -235,7 +233,15 @@ fun MainScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
-                        .background(Color(0xFF07080A))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF0D1029),
+                                    Color(0xFF080915),
+                                    Color(0xFF05060C)
+                                )
+                            )
+                        )
                         .verticalScroll(
                             state = scrollState,
                             flingBehavior = smoothFlingBehavior
@@ -254,11 +260,11 @@ fun MainScreen(
                         )
                     }
 
-                    // --- РЕАКТОР И СТАТУС ---
+                    // --- КНОПКА ПИТАНИЯ EASYGO STYLE ---
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp),
+                            .padding(top = 28.dp, bottom = 20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -267,41 +273,30 @@ fun MainScreen(
                             onClick = { onAction(MainAction.ToggleService) }
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
-                        Text(
-                            text = if (isRunning) "S Y S T E M   O N L I N E" else "S Y S T E M   O F F L I N E",
-                            color = if (isRunning) Color(0xFF00E5FF) else Color(0xFF555555),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 3.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (isRunning) "SECURE TUNNEL ACTIVE" else "TAP TO INITIALIZE",
-                            color = if (isRunning) Color(0xFF00E5FF).copy(alpha = 0.6f) else Color(0xFF333333),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Панель быстрых кнопок
+                        // ПАНЕЛЬ БЫСТРЫХ ДЕЙСТВИЙ (ВСТАВИТЬ / QR / ГИД)
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             CustomActionButton(
-                                text = if (showInstructionBanner) "📖 Скрыть гид" else "📖 Инструкция",
-                                accentColor = Color(0xFF00FF88),
-                                onClick = { showInstructionBanner = !showInstructionBanner }
+                                text = "📋 Из буфера",
+                                accentColor = Color(0xFF3861FB),
+                                onClick = { onAction(MainAction.ImportClipboard) }
                             )
 
                             CustomActionButton(
-                                text = "📷 Сканировать QR",
-                                accentColor = Color(0xFF9D00FF),
+                                text = "📷 QR-код",
+                                accentColor = Color(0xFF6C5CE7),
                                 onClick = { onAction(MainAction.ImportQRcode) }
+                            )
+
+                            CustomActionButton(
+                                text = if (showInstructionBanner) "📖 Скрыть" else "📖 Инструкция",
+                                accentColor = Color(0xFF00D2D3),
+                                onClick = { showInstructionBanner = !showInstructionBanner }
                             )
                         }
                     }
@@ -312,9 +307,9 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 6.dp)
-                                .background(Color(0xCC121212), RoundedCornerShape(16.dp))
-                                .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(16.dp))
-                                .padding(14.dp)
+                                .background(Color(0xFF141733), RoundedCornerShape(20.dp))
+                                .border(1.dp, Color(0xFF272C5A), RoundedCornerShape(20.dp))
+                                .padding(16.dp)
                         ) {
                             Column {
                                 Row(
@@ -323,8 +318,8 @@ fun MainScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "🚀 Быстрый старт OneTap VR",
-                                        color = Color(0xFF00FF88),
+                                        text = "🚀 Быстрый старт OneTap Mobile",
+                                        color = Color(0xFF00D2D3),
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -353,27 +348,26 @@ fun MainScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
 
-                                InlineInstructionStep("1", "Зайдите в Telegram-бот @one_tap_vpn_bot и получите QR-код.")
-                                InlineInstructionStep("2", "Нажмите «📷 Сканировать QR» прямо на этом экране.")
-                                InlineInstructionStep("3", "Наведите камеру очков на QR-код для импорта.")
-                                InlineInstructionStep("4", "Выберите появившийся сервер и нажмите кнопку подключения!")
+                                InlineInstructionStep("1", "Скопируйте полученный ключ VLESS или PIN-код.")
+                                InlineInstructionStep("2", "Нажмите кнопку «📋 Из буфера» для моментального добавления.")
+                                InlineInstructionStep("3", "Нажмите на центральную кнопку питания для активации.")
                             }
                         }
                     }
 
-                    // --- СПИСОК СЕРВЕРОВ ---
+                    // --- КАРТОЧНЫЙ СПИСОК СЕРВЕРОВ (EASYGO STYLE) ---
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(520.dp)
-                            .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                            .background(Color(0xFF0F1015))
+                            .height(540.dp)
+                            .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                            .background(Color(0xFF131738))
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFF1F222C),
-                                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+                                color = Color(0xFF242A5C),
+                                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
                             )
                     ) {
                         HorizontalPager(
@@ -406,7 +400,7 @@ fun MainScreen(
                                     if (confirmRemove) showRemoveConfirm = guid
                                     else onAction(MainAction.RemoveServer(guid))
                                 },
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp)
                             )
                         }
                     }
@@ -424,18 +418,18 @@ private fun CustomActionButton(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF12141D))
-            .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF171B3E))
+            .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             color = Color.White,
             fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -445,14 +439,14 @@ private fun InlineInstructionStep(number: String, text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 3.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.Top
     ) {
         Box(
             modifier = Modifier
                 .padding(top = 2.dp)
                 .size(18.dp)
-                .background(Color(0xFF8A2BE2), RoundedCornerShape(9.dp)),
+                .background(Color(0xFF3861FB), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -465,7 +459,7 @@ private fun InlineInstructionStep(number: String, text: String) {
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
-            color = Color.White,
+            color = Color(0xFFC7CCE6),
             fontSize = 12.sp,
             lineHeight = 16.sp
         )
@@ -477,104 +471,80 @@ fun CyberPowerButton(
     isRunning: Boolean,
     onClick: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "cyber_anim")
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse_anim")
 
     val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.97f,
-        targetValue = 1.03f,
+        initialValue = 0.98f,
+        targetValue = 1.04f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
+            animation = tween(1800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseScale"
     )
 
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
+    val activeColor = Color(0xFF3861FB)
+    val idleColor = Color(0xFF282D5C)
+    val glowColor = if (isRunning) Color(0xFF3861FB) else Color(0xFF1B1E3D)
+
+    val buttonGlowAlpha by animateFloatAsState(
+        targetValue = if (isRunning) 0.6f else 0.25f,
+        animationSpec = tween(500),
+        label = "buttonGlowAlpha"
     )
-
-    val cyanGlow = Color(0xFF00E5FF)
-    val purpleGlow = Color(0xFF9D00FF)
-    val darkGlow = Color(0xFF12131A)
-
-    val glowAlpha by animateFloatAsState(
-        targetValue = if (isRunning) 0.55f else 0f,
-        animationSpec = tween(600),
-        label = "glowAlpha"
-    )
-
-    val scaleModifier = if (isRunning) Modifier.scale(pulseScale) else Modifier
 
     Box(
-        modifier = Modifier.size(230.dp),
+        modifier = Modifier.size(240.dp),
         contentAlignment = Alignment.Center
     ) {
+        // Внешний неоновый ореол (EasyGo Glow)
         Box(
             modifier = Modifier
-                .size(230.dp)
-                .then(scaleModifier)
+                .size(240.dp)
+                .scale(if (isRunning) pulseScale else 1f)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            cyanGlow.copy(alpha = glowAlpha),
-                            purpleGlow.copy(alpha = glowAlpha * 0.5f),
+                            glowColor.copy(alpha = buttonGlowAlpha),
+                            glowColor.copy(alpha = buttonGlowAlpha * 0.3f),
                             Color.Transparent
                         )
                     )
                 )
         )
 
-        Canvas(
-            modifier = Modifier
-                .size(190.dp)
-                .rotate(if (isRunning) rotation else 0f)
-        ) {
-            val strokeWidth = 12f
-
-            drawArc(
-                brush = Brush.sweepGradient(
-                    colors = if (isRunning) listOf(cyanGlow, purpleGlow, cyanGlow)
-                             else listOf(darkGlow, darkGlow)
-                ),
-                startAngle = 0f,
-                sweepAngle = 360f,
-                useCenter = false,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
-
-            drawArc(
-                color = if (isRunning) cyanGlow.copy(alpha = 0.8f) else Color(0xFF1E202B),
-                startAngle = -rotation * 1.5f,
-                sweepAngle = 220f,
-                useCenter = false,
-                style = Stroke(width = 4f, cap = StrokeCap.Round)
-            )
-        }
-
+        // Внешнее кольцо
         Box(
             modifier = Modifier
-                .size(125.dp)
+                .size(190.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color(0xFF1E212B), Color(0xFF0C0D12))
+                        colors = listOf(Color(0xFF232854), Color(0xFF131633))
                     )
                 )
                 .border(
                     width = 2.dp,
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            if (isRunning) cyanGlow else Color(0xFF2A2D3A),
-                            Color(0xFF10121A)
-                        )
-                    ),
+                    color = if (isRunning) activeColor.copy(alpha = 0.6f) else Color(0xFF272C59),
+                    shape = CircleShape
+                )
+        )
+
+        // Центральная кнопка включения
+        Box(
+            modifier = Modifier
+                .size(135.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.verticalGradient(
+                        colors = if (isRunning) listOf(Color(0xFF3861FB), Color(0xFF1F3BB3))
+                        else listOf(Color(0xFF1A1D3B), Color(0xFF0F1124))
+                    )
+                )
+                .border(
+                    width = 2.dp,
+                    color = if (isRunning) Color(0xFF6C8CFF) else Color(0xFF2C3260),
                     shape = CircleShape
                 )
                 .clickable(
@@ -585,24 +555,24 @@ fun CyberPowerButton(
             contentAlignment = Alignment.Center
         ) {
             val iconColor by animateColorAsState(
-                targetValue = if (isRunning) cyanGlow else Color(0xFF4A4E61),
+                targetValue = if (isRunning) Color.White else Color(0xFF646B96),
                 animationSpec = tween(300),
                 label = "iconColor"
             )
 
-            Canvas(modifier = Modifier.size(45.dp)) {
+            Canvas(modifier = Modifier.size(46.dp)) {
                 drawArc(
                     color = iconColor,
                     startAngle = -60f,
                     sweepAngle = 300f,
                     useCenter = false,
-                    style = Stroke(width = 8f, cap = StrokeCap.Round)
+                    style = Stroke(width = 7f, cap = StrokeCap.Round)
                 )
                 drawLine(
                     color = iconColor,
                     start = Offset(size.width / 2, 0f),
                     end = Offset(size.width / 2, size.height / 2.3f),
-                    strokeWidth = 8f,
+                    strokeWidth = 7f,
                     cap = StrokeCap.Round
                 )
             }
