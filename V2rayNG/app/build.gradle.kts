@@ -12,11 +12,11 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.onetap.vpn.vr"
+        applicationId = "com.onetap.vpn.mobile"
         minSdk = 24
         targetSdk = 37
-        versionCode = 737
-        versionName = "2.2.7"
+        versionCode = 1
+        versionName = "1.0.0"
 
         val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
@@ -121,7 +121,7 @@ android {
                 .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
                 .forEach { output ->
                     val abi = output.getFilter("ABI") ?: "universal"
-                    output.outputFileName = "OneTapVPN_${variant.versionName}-fdroid_${abi}.apk"
+                    output.outputFileName = "OneTapMobile_${variant.versionName}-fdroid_${abi}.apk"
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
@@ -141,7 +141,7 @@ android {
                     else
                         "universal"
 
-                    output.outputFileName = "OneTapVPN_${variant.versionName}_${abi}.apk"
+                    output.outputFileName = "OneTapMobile_${variant.versionName}_${abi}.apk"
                     if (versionCodes.containsKey(abi)) {
                         output.versionCodeOverride =
                             (1000000 * versionCodes[abi]!!).plus(variant.versionCode)
