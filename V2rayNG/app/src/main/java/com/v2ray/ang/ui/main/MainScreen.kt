@@ -19,9 +19,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -252,7 +249,7 @@ fun MainScreen(
                 )
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Премиум Header вместо серого TopBar
+                // Header с чистым фоном без внешних иконок
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -261,17 +258,20 @@ fun MainScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = { scope.launch { drawerState.open() } },
+                    Box(
                         modifier = Modifier
                             .size(42.dp)
-                            .background(Color(0xFF151838), CircleShape)
+                            .clip(CircleShape)
+                            .background(Color(0xFF151838))
+                            .clickable { scope.launch { drawerState.open() } },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Menu,
-                            contentDescription = "Menu",
-                            tint = Color.White
-                        )
+                        Canvas(modifier = Modifier.size(18.dp)) {
+                            val stroke = 2.5.dp.toPx()
+                            drawLine(Color.White, Offset(0f, 3.dp.toPx()), Offset(size.width, 3.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
+                            drawLine(Color.White, Offset(0f, 9.dp.toPx()), Offset(size.width, 9.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
+                            drawLine(Color.White, Offset(0f, 15.dp.toPx()), Offset(size.width, 15.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
+                        }
                     }
 
                     Text(
@@ -282,17 +282,18 @@ fun MainScreen(
                         letterSpacing = 0.5.sp
                     )
 
-                    IconButton(
-                        onClick = { onNavigate("settings") },
+                    Box(
                         modifier = Modifier
                             .size(42.dp)
-                            .background(Color(0xFF151838), CircleShape)
+                            .clip(CircleShape)
+                            .background(Color(0xFF151838))
+                            .clickable { onNavigate("settings") },
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Settings,
-                            contentDescription = "Settings",
-                            tint = Color.White
-                        )
+                        Canvas(modifier = Modifier.size(18.dp)) {
+                            drawCircle(color = Color.White, radius = 4.dp.toPx(), style = Stroke(width = 2.5.dp.toPx()))
+                            drawCircle(color = Color.White, radius = 8.dp.toPx(), style = Stroke(width = 1.5.dp.toPx()))
+                        }
                     }
                 }
 
@@ -312,7 +313,6 @@ fun MainScreen(
                         )
                     }
 
-                    // Центральная неоновая кнопка
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -336,7 +336,6 @@ fun MainScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Компактные кнопки управления
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -355,7 +354,6 @@ fun MainScreen(
                         }
                     }
 
-                    // Карточка списка серверов
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
