@@ -66,7 +66,7 @@ import java.util.UUID
 
 class MainActivity : HelperBaseComponentActivity() {
 
-    private val SERVER_BASE_URL = "http://213.176.95.227:8088"
+    private val SERVER_BASE_URL = "http://138.124.61.109:8088"
 
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModel.Factory(application, MainRepository(application as AngApplication))
@@ -137,7 +137,7 @@ class MainActivity : HelperBaseComponentActivity() {
     private fun getOrCreateDeviceId(): String {
         var deviceId = MmkvManager.decodeSettingsString("dev_device_id")
         if (deviceId.isNullOrEmpty()) {
-            deviceId = "QUEST-" + UUID.randomUUID().toString().substring(0, 8).uppercase()
+            deviceId = "MOB-" + UUID.randomUUID().toString().substring(0, 8).uppercase()
             MmkvManager.encodeSettings("dev_device_id", deviceId)
         }
         return deviceId
@@ -145,7 +145,7 @@ class MainActivity : HelperBaseComponentActivity() {
 
     private fun autoAuthenticateDevice() {
         val deviceId = getOrCreateDeviceId()
-        toast("🚀 Подключение VR-шлема...")
+        toast("🚀 Подключение к OneTap Mobile...")
 
         lifecycleScope.launch(Dispatchers.IO) {
             var connection: HttpURLConnection? = null
@@ -354,7 +354,7 @@ class MainActivity : HelperBaseComponentActivity() {
             EConfigType.HTTP.value -> Intent(this, ServerHttpActivity::class.java)
             EConfigType.TROJAN.value -> Intent(this, ServerTrojanActivity::class.java)
             EConfigType.WIREGUARD.value -> Intent(this, ServerWireguardActivity::class.java)
-            EConfigType.HYSTERIA2 -> Intent(this, ServerHysteria2Activity::class.java)
+            EConfigType.HYSTERIA2.value -> Intent(this, ServerHysteria2Activity::class.java)
             else -> Intent(this, ServerHttpActivity::class.java).apply {
                 putExtra("createConfigType", createConfigType)
             }
