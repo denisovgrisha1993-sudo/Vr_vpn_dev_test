@@ -26,7 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -40,6 +42,23 @@ import com.v2ray.ang.dto.entities.ProfileItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+
+fun formatServerRemarks(raw: String): String {
+    if (raw.isBlank()) return "OneTap Fast Node"
+    var name = raw
+    val tgIndex = name.indexOf("-tg_")
+    if (tgIndex != -1) name = name.substring(0, tgIndex)
+    val tgAltIndex = name.indexOf("_tg_")
+    if (tgAltIndex != -1) name = name.substring(0, tgAltIndex)
+
+    name = name.replace("OneTap-Mobile-", "")
+               .replace("OneTap-", "")
+               .replace("-VLESS", "")
+               .replace("_VLESS", "")
+               .trim()
+
+    return if (name.isBlank()) "OneTap Fast Node" else name
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -202,14 +221,14 @@ fun MainScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = "🚀 Быстрый старт OneTap Mobile",
+                    text = "Быстрый старт OneTap Mobile",
                     color = Color.White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 InstructionItem("1", "Скопируйте ключ или PIN из Telegram-бота.")
-                InstructionItem("2", "Нажмите кнопку «📋 Вставить ключ» на панели быстрого доступа.")
+                InstructionItem("2", "Нажмите кнопку «Вставить ключ» на панели быстрого доступа.")
                 InstructionItem("3", "Нажмите центральный OneTap-переключатель для активации защиты.")
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
@@ -242,7 +261,6 @@ fun MainScreen(
                 .background(Color(0xFF090A0F))
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Top Bar в стиле Cyber Glass
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -351,7 +369,6 @@ fun MainScreen(
                         )
                     }
 
-                    // Центральный Hero-блок OneTap Switch
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -376,31 +393,30 @@ fun MainScreen(
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        // Live Stats Telemetry виджет
                         LiveTelemetryCard(isRunning = isRunning, isLoading = isLoading)
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Быстрые Pill-кнопки
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             ModernPillButton(
-                                text = "📋 Вставить ключ",
+                                text = "Вставить ключ",
+                                iconType = IconType.CLIPBOARD,
                                 accentColor = Color(0xFF00D2FF),
                                 onClick = { onAction(MainAction.ImportClipboard) }
                             )
 
                             ModernPillButton(
-                                text = "📖 Инструкция",
+                                text = "Инструкция",
+                                iconType = IconType.BOOK,
                                 accentColor = Color(0xFF8F9CAE),
                                 onClick = { showInstructionSheet = true }
                             )
                         }
                     }
 
-                    // Карточка списка узлов и серверов
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -498,7 +514,7 @@ private fun LiveTelemetryCard(isRunning: Boolean, isLoading: Boolean) {
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = if (isRunning) "AES-256" else "DIRECT",
+                    text = if (isRunning) "TLS 1.3" else "DIRECT",
                     color = if (isRunning) Color(0xFF00D2FF) else Color(0xFF6B7280),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
@@ -536,9 +552,12 @@ private fun LiveTelemetryCard(isRunning: Boolean, isLoading: Boolean) {
     }
 }
 
+enum class IconType { CLIPBOARD, BOOK }
+
 @Composable
 private fun ModernPillButton(
     text: String,
+    iconType: IconType,
     accentColor: Color,
     onClick: () -> Unit
 ) {
@@ -551,12 +570,57 @@ private fun ModernPillButton(
             .padding(horizontal = 16.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Canvas(modifier = Modifier.size(14.dp)) {
+                val strokePx = 1.6.dp.toPx()
+                when (iconType) {
+                    IconType.CLIPBOARD -> {
+                        drawRoundRect(
+                            color = Color.White,
+                            topLeft = Offset(1.5.dp.toPx(), 2.5.dp.toPx()),
+                            size = Size(11.dp.toPx(), 11.dp.toPx()),
+                            cornerRadius = CornerRadius(2.dp.toPx()),
+                            style = Stroke(width = strokePx)
+                        )
+                        drawLine(
+                            color = Color.White,
+                            start = Offset(4.5.dp.toPx(), 1.2.dp.toPx()),
+                            end = Offset(9.5.dp.toPx(), 1.2.dp.toPx()),
+                            strokeWidth = strokePx,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                    IconType.BOOK -> {
+                        drawArc(
+                            color = Color.White,
+                            startAngle = 180f,
+                            sweepAngle = 180f,
+                            useCenter = false,
+                            topLeft = Offset(1.dp.toPx(), 3.dp.toPx()),
+                            size = Size(12.dp.toPx(), 8.dp.toPx()),
+                            style = Stroke(width = strokePx)
+                        )
+                        drawLine(
+                            color = Color.White,
+                            start = Offset(7.dp.toPx(), 3.dp.toPx()),
+                            end = Offset(7.dp.toPx(), 12.dp.toPx()),
+                            strokeWidth = strokePx,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = text,
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
     }
 }
 
@@ -622,7 +686,6 @@ fun CyberPowerButton(
         modifier = Modifier.size(210.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Фоновый ореол свечения
         Box(
             modifier = Modifier
                 .size(210.dp)
@@ -639,7 +702,6 @@ fun CyberPowerButton(
                 )
         )
 
-        // Внешнее кольцо с вращающимся спиннером при загрузке
         Canvas(
             modifier = Modifier
                 .size(165.dp)
@@ -659,7 +721,6 @@ fun CyberPowerButton(
             )
         }
 
-        // Центральная сенсорная кнопка питания
         Box(
             modifier = Modifier
                 .size(120.dp)
