@@ -6,10 +6,14 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.InputType
+import android.view.Gravity
 import android.view.KeyEvent
+import android.widget.EditText
+import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.runtime.Composable
 import androidx.lifecycle.lifecycleScope
 import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
@@ -62,7 +66,7 @@ import java.util.UUID
 
 class MainActivity : HelperBaseComponentActivity() {
 
-    private val SERVER_BASE_URL = "http://213.176.95.227:8088"
+    private val SERVER_BASE_URL = "http://138.124.61.109:8088"
 
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModel.Factory(application, MainRepository(application as AngApplication))
@@ -103,7 +107,7 @@ class MainActivity : HelperBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Автоматический импорт правил маршрутизации (Белый список РФ)
+        // Автоматическая настройка правил маршрутизации (Белый список РФ)
         val isRussianSetupDone = MmkvManager.decodeSettingsBool("is_russian_setup_done_v1")
         if (!isRussianSetupDone) {
             lifecycleScope.launch(Dispatchers.IO) {
@@ -121,7 +125,7 @@ class MainActivity : HelperBaseComponentActivity() {
 
         checkAndRequestPermission(PermissionType.POST_NOTIFICATIONS) {}
 
-        // Бесшовный запуск: если конфиг отсутствует — авторегистрация устройства
+        // Бесшовный запуск: если конфигов нет — автоматически авторизуем устройство
         lifecycleScope.launch {
             kotlinx.coroutines.delay(1000)
             if (mainViewModel.uiState.value.selectedGuid.isNullOrEmpty()) {
@@ -133,7 +137,7 @@ class MainActivity : HelperBaseComponentActivity() {
     private fun getOrCreateDeviceId(): String {
         var deviceId = MmkvManager.decodeSettingsString("dev_device_id")
         if (deviceId.isNullOrEmpty()) {
-            deviceId = "QUEST-" + UUID.randomUUID().toString().substring(0, 8).uppercase()
+            deviceId = "MOB-" + UUID.randomUUID().toString().substring(0, 8).uppercase()
             MmkvManager.encodeSettings("dev_device_id", deviceId)
         }
         return deviceId
@@ -141,7 +145,7 @@ class MainActivity : HelperBaseComponentActivity() {
 
     private fun autoAuthenticateDevice() {
         val deviceId = getOrCreateDeviceId()
-        toast("🚀 Подключение VR-шлема...")
+        toast("🚀 Подключение к OneTap Mobile...")
 
         lifecycleScope.launch(Dispatchers.IO) {
             var connection: HttpURLConnection? = null
@@ -241,7 +245,7 @@ class MainActivity : HelperBaseComponentActivity() {
         }
     }
 
-    @Composable
+    @androidx.compose.runtime.Composable
     override fun ScreenContent() {
         MainScreen(
             mainViewModel = mainViewModel,
@@ -340,18 +344,17 @@ class MainActivity : HelperBaseComponentActivity() {
     }
 
     private fun importManually(createConfigType: Int) {
-        val configType = EConfigType.fromInt(createConfigType)
-        val intent = when (configType) {
-            EConfigType.POLICYGROUP -> Intent(this, ServerGroupActivity::class.java)
-            EConfigType.PROXYCHAIN -> Intent(this, ServerProxyChainActivity::class.java)
-            EConfigType.VMESS -> Intent(this, ServerVmessActivity::class.java)
-            EConfigType.VLESS -> Intent(this, ServerVlessActivity::class.java)
-            EConfigType.SHADOWSOCKS -> Intent(this, ServerShadowsocksActivity::class.java)
-            EConfigType.SOCKS -> Intent(this, ServerSocksActivity::class.java)
-            EConfigType.HTTP -> Intent(this, ServerHttpActivity::class.java)
-            EConfigType.TROJAN -> Intent(this, ServerTrojanActivity::class.java)
-            EConfigType.WIREGUARD -> Intent(this, ServerWireguardActivity::class.java)
-            EConfigType.HYSTERIA2 -> Intent(this, ServerHysteria2Activity::class.java)
+        val intent = when (createConfigType) {
+            EConfigType.POLICYGROUP.value -> Intent(this, ServerGroupActivity::class.java)
+            EConfigType.PROXYCHAIN.value -> Intent(this, ServerProxyChainActivity::class.java)
+            EConfigType.VMESS.value -> Intent(this, ServerVmessActivity::class.java)
+            EConfigType.VLESS.value -> Intent(this, ServerVlessActivity::class.java)
+            EConfigType.SHADOWSOCKS.value -> Intent(this, ServerShadowsocksActivity::class.java)
+            EConfigType.SOCKS.value -> Intent(this, ServerSocksActivity::class.java)
+            EConfigType.HTTP.value -> Intent(this, ServerHttpActivity::class.java)
+            EConfigType.TROJAN.value -> Intent(this, ServerTrojanActivity::class.java)
+            EConfigType.WIREGUARD.value -> Intent(this, ServerWireguardActivity::class.java)
+            EConfigType.HYSTERIA2.value -> Intent(this, ServerHysteria2Activity::class.java)
             else -> Intent(this, ServerHttpActivity::class.java).apply {
                 putExtra("createConfigType", createConfigType)
             }
