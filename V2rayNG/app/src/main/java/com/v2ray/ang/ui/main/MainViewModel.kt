@@ -55,8 +55,7 @@ class MainViewModel(
             selectedGuid = dataSource.getSelectServer(),
             statusText = disconnectedText,
             confirmRemove = dataSource.getConfirmRemove(),
-            doubleColumnDisplay = dataSource.getDoubleColumnDisplay(),
-            currentRealPing = -1L
+            doubleColumnDisplay = dataSource.getDoubleColumnDisplay()
         )
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -103,11 +102,6 @@ class MainViewModel(
             MainServiceEvent.StateStartSuccess -> {
                 toastSuccess(R.string.toast_services_success)
                 updateRunningState(true)
-                // Автоматически замеряем пинг после успешного коннекта
-                viewModelScope.launch {
-                    delay(1200L)
-                    testCurrentServerRealPing()
-                }
             }
 
             is MainServiceEvent.StateStartFailure -> {
@@ -120,20 +114,9 @@ class MainViewModel(
                 updateRunningState(false)
             }
 
-            MainServiceEvent.StateStopSuccess -> {
-                updateRunningState(false)
-                _uiState.update { it.copy(currentRealPing = -1L) }
-            }
-
+            MainServiceEvent.StateStopSuccess -> updateRunningState(false)
             is MainServiceEvent.MeasureDelaySuccess -> {
-                val raw = event.content
-                val parsedPing = Regex("\\d+").find(raw)?.value?.toLongOrNull() ?: -1L
-                _uiState.update {
-                    it.copy(
-                        statusText = raw,
-                        currentRealPing = parsedPing
-                    )
-                }
+                _uiState.update { it.copy(statusText = event.content) }
             }
 
             MainServiceEvent.MeasureConfigSuccess -> {
@@ -204,9 +187,8 @@ class MainViewModel(
                 _uiState.update { it.copy(shareQRCodeBitmap = null) }
             }
 
-            MainAction.TestCurrentServer -> testCurrentServerRealPing()
-
             MainAction.ToggleService,
+            MainAction.TestCurrentServer,
             MainAction.ImportQRcode,
             MainAction.ImportClipboard,
             MainAction.ImportConfigLocal,
@@ -744,7 +726,6 @@ class MainViewModel(
     fun testCurrentServerRealPing() {
         _uiState.update {
             it.copy(
-                currentRealPing = 0L,
                 statusText = dataSource.getString(R.string.connection_test_testing)
             )
         }
