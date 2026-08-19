@@ -393,7 +393,11 @@ fun MainScreen(
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        LiveTelemetryCard(isRunning = isRunning, isLoading = isLoading)
+                        LiveTelemetryCard(
+                            isRunning = isRunning,
+                            ping = uiState.currentRealPing,
+                            onTestPing = { onAction(MainAction.TestCurrentServer) }
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -467,7 +471,26 @@ fun MainScreen(
 }
 
 @Composable
-private fun LiveTelemetryCard(isRunning: Boolean, isLoading: Boolean) {
+private fun LiveTelemetryCard(
+    isRunning: Boolean,
+    ping: Long,
+    onTestPing: () -> Unit
+) {
+    val pingText = when {
+        !isRunning -> "-- ms"
+        ping == 0L -> "Тест..."
+        ping < 0L -> "Тап для замера"
+        ping >= 9999L -> "Таймаут"
+        else -> "$ping ms"
+    }
+
+    val pingColor = when {
+        !isRunning || ping <= 0L -> Color(0xFF6B7280)
+        ping < 120L -> Color(0xFF00F5A0)
+        ping < 250L -> Color(0xFFFFCC00)
+        else -> Color(0xFFFF3B30)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -475,6 +498,7 @@ private fun LiveTelemetryCard(isRunning: Boolean, isLoading: Boolean) {
             .clip(RoundedCornerShape(18.dp))
             .background(Color(0xFF131622))
             .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(18.dp))
+            .clickable(enabled = isRunning, onClick = onTestPing)
             .padding(vertical = 12.dp, horizontal = 16.dp)
     ) {
         Row(
@@ -486,18 +510,18 @@ private fun LiveTelemetryCard(isRunning: Boolean, isLoading: Boolean) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
-                        .background(if (isRunning) Color(0xFF00F5A0) else Color(0xFF6B7280), CircleShape)
+                        .background(pingColor, CircleShape)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
-                        text = if (isRunning) "24 ms" else "-- ms",
+                        text = pingText,
                         color = Color.White,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "LATENCY",
+                        text = "LATENCY (TAP)",
                         color = Color(0xFF8F9CAE),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.SemiBold
