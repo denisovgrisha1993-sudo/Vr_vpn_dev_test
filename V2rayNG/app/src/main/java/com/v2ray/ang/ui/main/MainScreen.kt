@@ -395,7 +395,7 @@ fun MainScreen(
 
                         LiveTelemetryCard(
                             isRunning = isRunning,
-                            ping = uiState.currentRealPing,
+                            statusText = uiState.statusText,
                             onTestPing = { onAction(MainAction.TestCurrentServer) }
                         )
 
@@ -473,21 +473,30 @@ fun MainScreen(
 @Composable
 private fun LiveTelemetryCard(
     isRunning: Boolean,
-    ping: Long,
+    statusText: String,
     onTestPing: () -> Unit
 ) {
+    val parsedPing = remember(statusText) {
+        val regex = Regex("(\\d+)\\s*(ms|мс)")
+        val match = regex.find(statusText)
+        if (match != null) {
+            match.groupValues[1].toLongOrNull()
+        } else {
+            Regex("\\d+").find(statusText)?.value?.toLongOrNull()
+        }
+    }
+
     val pingText = when {
         !isRunning -> "-- ms"
-        ping == 0L -> "Тест..."
-        ping < 0L -> "Тап для замера"
-        ping >= 9999L -> "Таймаут"
-        else -> "$ping ms"
+        statusText.contains("Testing", ignoreCase = true) || statusText.contains("тестир", ignoreCase = true) -> "Тест..."
+        parsedPing != null -> "$parsedPing ms"
+        else -> "Тап для замера"
     }
 
     val pingColor = when {
-        !isRunning || ping <= 0L -> Color(0xFF6B7280)
-        ping < 120L -> Color(0xFF00F5A0)
-        ping < 250L -> Color(0xFFFFCC00)
+        !isRunning || parsedPing == null -> Color(0xFF6B7280)
+        parsedPing < 120L -> Color(0xFF00F5A0)
+        parsedPing < 250L -> Color(0xFFFFCC00)
         else -> Color(0xFFFF3B30)
     }
 
