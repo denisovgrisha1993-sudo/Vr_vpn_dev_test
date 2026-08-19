@@ -55,7 +55,8 @@ class MainViewModel(
             selectedGuid = dataSource.getSelectServer(),
             statusText = disconnectedText,
             confirmRemove = dataSource.getConfirmRemove(),
-            doubleColumnDisplay = dataSource.getDoubleColumnDisplay()
+            doubleColumnDisplay = dataSource.getDoubleColumnDisplay(),
+            currentRealPing = -1L
         )
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -102,6 +103,11 @@ class MainViewModel(
             MainServiceEvent.StateStartSuccess -> {
                 toastSuccess(R.string.toast_services_success)
                 updateRunningState(true)
+                // Автоматически замеряем пинг после успешного коннекта
+                viewModelScope.launch {
+                    delay(1200L)
+                    testCurrentServerRealPing()
+                }
             }
 
             is MainServiceEvent.StateStartFailure -> {
@@ -114,9 +120,20 @@ class MainViewModel(
                 updateRunningState(false)
             }
 
-            MainServiceEvent.StateStopSuccess -> updateRunningState(false)
+            MainServiceEvent.StateStopSuccess -> {
+                updateRunningState(false)
+                _uiState.update { it.copy(currentRealPing = -1L) }
+            }
+
             is MainServiceEvent.MeasureDelaySuccess -> {
-                _uiState.update { it.copy(statusText = event.content) }
+                val raw = event.content
+                val parsedPing = Regex("\\d+").find(raw)?.value?.toLongOrNull() ?: -1L
+                _uiState.update {
+                    it.copy(
+                        statusText = raw,
+                        currentRealPing = parsedPing
+                    )
+                }
             }
 
             MainServiceEvent.MeasureConfigSuccess -> {
@@ -187,8 +204,9 @@ class MainViewModel(
                 _uiState.update { it.copy(shareQRCodeBitmap = null) }
             }
 
+            MainAction.TestCurrentServer -> testCurrentServerRealPing()
+
             MainAction.ToggleService,
-            MainAction.TestCurrentServer,
             MainAction.ImportQRcode,
             MainAction.ImportClipboard,
             MainAction.ImportConfigLocal,
@@ -203,7 +221,7 @@ class MainViewModel(
         }
     }
 
-    // ---------- Initialization (С Авто-подключением и фоновым обновлением) ----------
+    // ---------- Initialization ----------
     fun initialize() {
         viewModelScope.launch(preloadDispatcher) {
             try {
@@ -212,10 +230,8 @@ class MainViewModel(
                 dataSource.initAssets()
                 dataSource.syncSubscriptions()
 
-                // 1. Авто-обновление подписки в фоне
                 importConfigViaSub(silent = true)
 
-                // 2. Авто-подключение при старте приложения (если есть активный сервер и VPN еще выключен)
                 val currentGuid = dataSource.getSelectServer()
                 if (!currentGuid.isNullOrEmpty() && !_uiState.value.isRunning) {
                     onAction(MainAction.ToggleService)
@@ -238,7 +254,6 @@ class MainViewModel(
         }
     }
 
-    // ---------- Group & server loading ----------
     private suspend fun buildServersCache(guids: List<String>): List<ServersCache> =
         guids.mapNotNull { guid ->
             currentCoroutineContext().ensureActive()
@@ -351,7 +366,6 @@ class MainViewModel(
                 val selectedServers = loadGroup(selectedGroup, forceRefresh)
                 updateGroupUi(selectedGroup, selectedServers)
 
-                // 3. Авто-выбор первого сервера при наличии серверов
                 if (dataSource.getSelectServer().isNullOrEmpty() && selectedServers.isNotEmpty()) {
                     updateSelectedGuid(selectedServers.first().guid)
                 }
@@ -383,7 +397,6 @@ class MainViewModel(
         }.also { setupGroupJob = it }
     }
 
-    // ---------- Business actions (coroutine-based) ----------
     private fun importBatchConfig(configText: String) {
         launchLoading {
             withContext(ioDispatcher) {
@@ -398,7 +411,6 @@ class MainViewModel(
                             }
                             setupGroupTab(forceRefresh = true).join()
 
-                            // Автоматически выбираем импортированный сервер
                             val servers = currentServers()
                             if (servers.isNotEmpty()) {
                                 updateSelectedGuid(servers.first().guid)
@@ -444,7 +456,6 @@ class MainViewModel(
                     setupGroupTab(forceRefresh = true).join()
                     refreshSelectedGuid()
 
-                    // Выбираем первый сервер, если никакой не выбран
                     val servers = currentServers()
                     if (dataSource.getSelectServer().isNullOrEmpty() && servers.isNotEmpty()) {
                         updateSelectedGuid(servers.first().guid)
@@ -733,6 +744,7 @@ class MainViewModel(
     fun testCurrentServerRealPing() {
         _uiState.update {
             it.copy(
+                currentRealPing = 0L,
                 statusText = dataSource.getString(R.string.connection_test_testing)
             )
         }
