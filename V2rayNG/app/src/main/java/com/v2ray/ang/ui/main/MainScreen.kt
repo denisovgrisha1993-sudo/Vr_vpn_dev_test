@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -192,7 +193,7 @@ fun MainScreen(
     if (showInstructionSheet) {
         ModalBottomSheet(
             onDismissRequest = { showInstructionSheet = false },
-            containerColor = Color(0xFF10132B),
+            containerColor = Color(0xFF131622),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
         ) {
             Column(
@@ -201,23 +202,23 @@ fun MainScreen(
                     .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = "🚀 Инструкция OneTap Mobile",
+                    text = "🚀 Быстрый старт OneTap Mobile",
                     color = Color.White,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                InstructionItem("1", "Скопируйте ключ или PIN из бота в Telegram.")
-                InstructionItem("2", "Нажмите кнопку «📋 Из буфера» на главном экране.")
-                InstructionItem("3", "Нажмите на большую кнопку питания в центре для подключения.")
+                InstructionItem("1", "Скопируйте ключ или PIN из Telegram-бота.")
+                InstructionItem("2", "Нажмите кнопку «📋 Вставить ключ» на панели быстрого доступа.")
+                InstructionItem("3", "Нажмите центральный OneTap-переключатель для активации защиты.")
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = { showInstructionSheet = false },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3861FB)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00F5A0)),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text("Понятно", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Готово", color = Color(0xFF090A0F), fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -238,18 +239,10 @@ fun MainScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF0A0C20),
-                            Color(0xFF060714),
-                            Color(0xFF04050D)
-                        )
-                    )
-                )
+                .background(Color(0xFF090A0F))
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Header с чистым фоном без внешних иконок
+                // Top Bar в стиле Cyber Glass
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -258,41 +251,86 @@ fun MainScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF151838))
-                            .clickable { scope.launch { drawerState.open() } },
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Canvas(modifier = Modifier.size(18.dp)) {
-                            val stroke = 2.5.dp.toPx()
-                            drawLine(Color.White, Offset(0f, 3.dp.toPx()), Offset(size.width, 3.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
-                            drawLine(Color.White, Offset(0f, 9.dp.toPx()), Offset(size.width, 9.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
-                            drawLine(Color.White, Offset(0f, 15.dp.toPx()), Offset(size.width, 15.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF131622))
+                                .border(1.dp, Color(0x1AFFFFFF), CircleShape)
+                                .clickable { scope.launch { drawerState.open() } },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Canvas(modifier = Modifier.size(16.dp)) {
+                                val stroke = 2.dp.toPx()
+                                drawLine(Color.White, Offset(0f, 3.dp.toPx()), Offset(size.width, 3.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
+                                drawLine(Color.White, Offset(0f, 8.dp.toPx()), Offset(size.width, 8.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
+                                drawLine(Color.White, Offset(0f, 13.dp.toPx()), Offset(size.width, 13.dp.toPx()), strokeWidth = stroke, cap = StrokeCap.Round)
+                            }
+                        }
+
+                        Column {
+                            Text(
+                                text = "OneTap",
+                                color = Color.White,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                            Text(
+                                text = "VLESS REALITY",
+                                color = Color(0xFF00D2FF),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
                         }
                     }
 
-                    Text(
-                        text = "OneTap Mobile",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF151838))
-                            .clickable { onNavigate("settings") },
-                        contentAlignment = Alignment.Center
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Canvas(modifier = Modifier.size(18.dp)) {
-                            drawCircle(color = Color.White, radius = 4.dp.toPx(), style = Stroke(width = 2.5.dp.toPx()))
-                            drawCircle(color = Color.White, radius = 8.dp.toPx(), style = Stroke(width = 1.5.dp.toPx()))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF131622))
+                                .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(if (isRunning) Color(0xFF00F5A0) else Color(0xFF6B7280), CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "PRO",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF131622))
+                                .border(1.dp, Color(0x1AFFFFFF), CircleShape)
+                                .clickable { onNavigate("settings") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Canvas(modifier = Modifier.size(16.dp)) {
+                                drawCircle(color = Color.White, radius = 3.5.dp.toPx(), style = Stroke(width = 2.dp.toPx()))
+                                drawCircle(color = Color.White, radius = 7.dp.toPx(), style = Stroke(width = 1.5.dp.toPx()))
+                            }
                         }
                     }
                 }
@@ -313,57 +351,66 @@ fun MainScreen(
                         )
                     }
 
+                    // Центральный Hero-блок OneTap Switch
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp, bottom = 24.dp),
+                            .padding(top = 20.dp, bottom = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CyberPowerButton(
                             isRunning = isRunning,
+                            isLoading = isLoading,
                             onClick = { onAction(MainAction.ToggleService) }
                         )
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = if (isRunning) "ПОДКЛЮЧЕНО" else "ОТКЛЮЧЕНО",
-                            color = if (isRunning) Color(0xFF3861FB) else Color(0xFF7A83A6),
-                            fontSize = 14.sp,
+                            text = if (isRunning) "PROTECTED & SECURE" else "TAP TO CONNECT",
+                            color = if (isRunning) Color(0xFF00F5A0) else Color(0xFF8F9CAE),
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 2.sp
                         )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
+                        // Live Stats Telemetry виджет
+                        LiveTelemetryCard(isRunning = isRunning, isLoading = isLoading)
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Быстрые Pill-кнопки
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             ModernPillButton(
                                 text = "📋 Вставить ключ",
-                                accentColor = Color(0xFF3861FB),
+                                accentColor = Color(0xFF00D2FF),
                                 onClick = { onAction(MainAction.ImportClipboard) }
                             )
 
                             ModernPillButton(
                                 text = "📖 Инструкция",
-                                accentColor = Color(0xFF5E6AD2),
+                                accentColor = Color(0xFF8F9CAE),
                                 onClick = { showInstructionSheet = true }
                             )
                         }
                     }
 
+                    // Карточка списка узлов и серверов
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f, fill = false)
                             .heightIn(min = 450.dp)
                             .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                            .background(Color(0xFF10132B))
+                            .background(Color(0xFF131622))
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFF1D224D),
+                                color = Color(0x14FFFFFF),
                                 shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
                             )
                     ) {
@@ -404,6 +451,92 @@ fun MainScreen(
 }
 
 @Composable
+private fun LiveTelemetryCard(isRunning: Boolean, isLoading: Boolean) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFF131622))
+            .border(1.dp, Color(0x14FFFFFF), RoundedCornerShape(18.dp))
+            .padding(vertical = 12.dp, horizontal = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(if (isRunning) Color(0xFF00F5A0) else Color(0xFF6B7280), CircleShape)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = if (isRunning) "24 ms" else "-- ms",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "LATENCY",
+                        color = Color(0xFF8F9CAE),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(24.dp)
+                    .background(Color(0x14FFFFFF))
+            )
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = if (isRunning) "AES-256" else "DIRECT",
+                    color = if (isRunning) Color(0xFF00D2FF) else Color(0xFF6B7280),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "SECURITY",
+                    color = Color(0xFF8F9CAE),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(24.dp)
+                    .background(Color(0x14FFFFFF))
+            )
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = if (isRunning) "ONLINE" else "IDLE",
+                    color = if (isRunning) Color(0xFF00F5A0) else Color(0xFF6B7280),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "STATUS",
+                    color = Color(0xFF8F9CAE),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ModernPillButton(
     text: String,
     accentColor: Color,
@@ -411,17 +544,17 @@ private fun ModernPillButton(
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF151838))
-            .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF131622))
+            .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             color = Color.White,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold
         )
     }
@@ -438,22 +571,23 @@ private fun InstructionItem(num: String, desc: String) {
         Box(
             modifier = Modifier
                 .size(24.dp)
-                .background(Color(0xFF3861FB), CircleShape),
+                .background(Color(0xFF00F5A0), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = num, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text = num, color = Color(0xFF090A0F), fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Text(text = desc, color = Color(0xFFC3C8E2), fontSize = 13.sp, lineHeight = 18.sp)
+        Text(text = desc, color = Color(0xFF8F9CAE), fontSize = 13.sp, lineHeight = 18.sp)
     }
 }
 
 @Composable
 fun CyberPowerButton(
     isRunning: Boolean,
+    isLoading: Boolean,
     onClick: () -> Unit
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse_anim")
+    val infiniteTransition = rememberInfiniteTransition(label = "cyber_switch")
 
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.98f,
@@ -465,64 +599,85 @@ fun CyberPowerButton(
         label = "pulseScale"
     )
 
-    val activeColor = Color(0xFF3861FB)
-    val glowColor = if (isRunning) Color(0xFF3861FB) else Color(0xFF1E234D)
+    val spinAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "spinAngle"
+    )
+
+    val mintGlow = Color(0xFF00F5A0)
+    val cyanGlow = Color(0xFF00D2FF)
 
     val glowAlpha by animateFloatAsState(
-        targetValue = if (isRunning) 0.65f else 0.2f,
+        targetValue = if (isRunning) 0.55f else 0.12f,
         animationSpec = tween(500),
         label = "glowAlpha"
     )
 
     Box(
-        modifier = Modifier.size(230.dp),
+        modifier = Modifier.size(210.dp),
         contentAlignment = Alignment.Center
     ) {
+        // Фоновый ореол свечения
         Box(
             modifier = Modifier
-                .size(230.dp)
+                .size(210.dp)
                 .scale(if (isRunning) pulseScale else 1f)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            glowColor.copy(alpha = glowAlpha),
-                            glowColor.copy(alpha = glowAlpha * 0.25f),
+                            if (isRunning) mintGlow.copy(alpha = glowAlpha) else Color(0x22131622),
+                            if (isRunning) cyanGlow.copy(alpha = glowAlpha * 0.35f) else Color.Transparent,
                             Color.Transparent
                         )
                     )
                 )
         )
 
-        Box(
+        // Внешнее кольцо с вращающимся спиннером при загрузке
+        Canvas(
             modifier = Modifier
-                .size(180.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color(0xFF1E234F), Color(0xFF10132B))
-                    )
-                )
-                .border(
-                    width = 2.dp,
-                    color = if (isRunning) activeColor.copy(alpha = 0.8f) else Color(0xFF282F66),
-                    shape = CircleShape
-                )
-        )
+                .size(165.dp)
+                .rotate(if (isLoading) spinAngle else 0f)
+        ) {
+            val ringColor = when {
+                isLoading -> cyanGlow
+                isRunning -> mintGlow
+                else -> Color(0xFF1E2235)
+            }
+            drawArc(
+                color = ringColor,
+                startAngle = if (isLoading) 0f else -90f,
+                sweepAngle = if (isLoading) 120f else 360f,
+                useCenter = false,
+                style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
+            )
+        }
 
+        // Центральная сенсорная кнопка питания
         Box(
             modifier = Modifier
-                .size(130.dp)
+                .size(120.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.verticalGradient(
-                        colors = if (isRunning) listOf(Color(0xFF3861FB), Color(0xFF1C3DBF))
-                        else listOf(Color(0xFF161938), Color(0xFF0E1024))
+                        colors = if (isRunning) listOf(Color(0xFF005A3E), Color(0xFF0B211C))
+                        else listOf(Color(0xFF1A1E2E), Color(0xFF11141F))
                     )
                 )
                 .border(
-                    width = 2.dp,
-                    color = if (isRunning) Color(0xFF7593FF) else Color(0xFF2D356E),
+                    width = 1.5.dp,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            if (isRunning) mintGlow else Color(0x33FFFFFF),
+                            Color(0x05FFFFFF)
+                        )
+                    ),
                     shape = CircleShape
                 )
                 .clickable(
@@ -533,24 +688,24 @@ fun CyberPowerButton(
             contentAlignment = Alignment.Center
         ) {
             val iconColor by animateColorAsState(
-                targetValue = if (isRunning) Color.White else Color(0xFF7B84AC),
+                targetValue = if (isRunning) Color(0xFF00F5A0) else Color(0xFF6B7280),
                 animationSpec = tween(300),
                 label = "iconColor"
             )
 
-            Canvas(modifier = Modifier.size(44.dp)) {
+            Canvas(modifier = Modifier.size(42.dp)) {
                 drawArc(
                     color = iconColor,
                     startAngle = -60f,
                     sweepAngle = 300f,
                     useCenter = false,
-                    style = Stroke(width = 7f, cap = StrokeCap.Round)
+                    style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
                 )
                 drawLine(
                     color = iconColor,
                     start = Offset(size.width / 2, 0f),
-                    end = Offset(size.width / 2, size.height / 2.3f),
-                    strokeWidth = 7f,
+                    end = Offset(size.width / 2, size.height / 2.2f),
+                    strokeWidth = 6.dp.toPx(),
                     cap = StrokeCap.Round
                 )
             }
