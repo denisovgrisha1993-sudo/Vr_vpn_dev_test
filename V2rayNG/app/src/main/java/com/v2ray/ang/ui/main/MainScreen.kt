@@ -19,6 +19,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -60,14 +63,12 @@ fun MainScreen(
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var showSearch by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
     var showDelAllConfirm by remember { mutableStateOf(false) }
     var showDelDuplicateConfirm by remember { mutableStateOf(false) }
     var showDelInvalidConfirm by remember { mutableStateOf(false) }
     var showRemoveConfirm by remember { mutableStateOf<String?>(null) }
 
-    var showInstructionBanner by remember { mutableStateOf(false) }
+    var showInstructionSheet by remember { mutableStateOf(false) }
     var shareTarget by remember { mutableStateOf<Triple<String, ProfileItem, Boolean>?>(null) }
 
     val pagerState = rememberPagerState(
@@ -191,6 +192,41 @@ fun MainScreen(
         QRCodeDialog(bitmap = shareQRCodeBitmap, onDismiss = { onAction(MainAction.DismissQRCodeDialog) })
     }
 
+    if (showInstructionSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showInstructionSheet = false },
+            containerColor = Color(0xFF10132B),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                Text(
+                    text = "🚀 Инструкция OneTap Mobile",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                InstructionItem("1", "Скопируйте ключ или PIN из бота в Telegram.")
+                InstructionItem("2", "Нажмите кнопку «📋 Из буфера» на главном экране.")
+                InstructionItem("3", "Нажмите на большую кнопку питания в центре для подключения.")
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { showInstructionSheet = false },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3861FB)),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Понятно", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -202,50 +238,68 @@ fun MainScreen(
             )
         }
     ) {
-        Scaffold(
-            containerColor = Color(0xFF090B1E),
-            contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
-            topBar = {
-                MainTopBar(
-                    isLoading = isLoading,
-                    showSearch = showSearch,
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { query: String ->
-                        searchQuery = query
-                        onAction(MainAction.Search(query))
-                    },
-                    onSearchClose = {
-                        searchQuery = ""
-                        onAction(MainAction.Search(""))
-                        showSearch = false
-                    },
-                    onSearchToggle = { show: Boolean -> showSearch = show },
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    onAction = onAction,
-                    onDelAllConfig = { showDelAllConfirm = true },
-                    onDelDuplicateConfig = { showDelDuplicateConfirm = true },
-                    onDelInvalidConfig = { showDelInvalidConfirm = true }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF0A0C20),
+                            Color(0xFF060714),
+                            Color(0xFF04050D)
+                        )
+                    )
                 )
-            }
-        ) { innerPadding ->
-            if (groups.isNotEmpty()) {
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Премиум Header вместо серого TopBar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { scope.launch { drawerState.open() } },
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(Color(0xFF151838), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Menu,
+                            contentDescription = "Menu",
+                            tint = Color.White
+                        )
+                    }
+
+                    Text(
+                        text = "OneTap Mobile",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+
+                    IconButton(
+                        onClick = { onNavigate("settings") },
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(Color(0xFF151838), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = "Settings",
+                            tint = Color.White
+                        )
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF0D1029),
-                                    Color(0xFF080915),
-                                    Color(0xFF05060C)
-                                )
-                            )
-                        )
-                        .verticalScroll(
-                            state = scrollState,
-                            flingBehavior = smoothFlingBehavior
-                        )
+                        .verticalScroll(state = scrollState, flingBehavior = smoothFlingBehavior)
                 ) {
                     if (groups.size > 1) {
                         GroupTabBar(
@@ -253,120 +307,65 @@ fun MainScreen(
                             selectedTabIndex = pagerState.currentPage.coerceIn(0, groups.lastIndex),
                             mainViewModel = mainViewModel,
                             onTabClick = { targetIndex ->
-                                scope.launch {
-                                    pagerState.animateScrollToPage(targetIndex)
-                                }
+                                scope.launch { pagerState.animateScrollToPage(targetIndex) }
                             }
                         )
                     }
 
-                    // --- КНОПКА ПИТАНИЯ EASYGO STYLE ---
+                    // Центральная неоновая кнопка
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 28.dp, bottom = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                            .padding(top = 16.dp, bottom = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         CyberPowerButton(
                             isRunning = isRunning,
                             onClick = { onAction(MainAction.ToggleService) }
                         )
 
-                        Spacer(modifier = Modifier.height(18.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
-                        // ПАНЕЛЬ БЫСТРЫХ ДЕЙСТВИЙ (ВСТАВИТЬ / QR / ГИД)
+                        Text(
+                            text = if (isRunning) "ПОДКЛЮЧЕНО" else "ОТКЛЮЧЕНО",
+                            color = if (isRunning) Color(0xFF3861FB) else Color(0xFF7A83A6),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 2.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Компактные кнопки управления
                         Row(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            CustomActionButton(
-                                text = "📋 Из буфера",
+                            ModernPillButton(
+                                text = "📋 Вставить ключ",
                                 accentColor = Color(0xFF3861FB),
                                 onClick = { onAction(MainAction.ImportClipboard) }
                             )
 
-                            CustomActionButton(
-                                text = "📷 QR-код",
-                                accentColor = Color(0xFF6C5CE7),
-                                onClick = { onAction(MainAction.ImportQRcode) }
-                            )
-
-                            CustomActionButton(
-                                text = if (showInstructionBanner) "📖 Скрыть" else "📖 Инструкция",
-                                accentColor = Color(0xFF00D2D3),
-                                onClick = { showInstructionBanner = !showInstructionBanner }
+                            ModernPillButton(
+                                text = "📖 Инструкция",
+                                accentColor = Color(0xFF5E6AD2),
+                                onClick = { showInstructionSheet = true }
                             )
                         }
                     }
 
-                    // --- БАННЕР ИНСТРУКЦИИ ---
-                    AnimatedVisibility(visible = showInstructionBanner) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                                .background(Color(0xFF141733), RoundedCornerShape(20.dp))
-                                .border(1.dp, Color(0xFF272C5A), RoundedCornerShape(20.dp))
-                                .padding(16.dp)
-                        ) {
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "🚀 Быстрый старт OneTap Mobile",
-                                        color = Color(0xFF00D2D3),
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .clickable { showInstructionBanner = false },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Canvas(modifier = Modifier.size(12.dp)) {
-                                            drawLine(
-                                                color = Color.Gray,
-                                                start = Offset(0f, 0f),
-                                                end = Offset(size.width, size.height),
-                                                strokeWidth = 3f,
-                                                cap = StrokeCap.Round
-                                            )
-                                            drawLine(
-                                                color = Color.Gray,
-                                                start = Offset(size.width, 0f),
-                                                end = Offset(0f, size.height),
-                                                strokeWidth = 3f,
-                                                cap = StrokeCap.Round
-                                            )
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                InlineInstructionStep("1", "Скопируйте полученный ключ VLESS или PIN-код.")
-                                InlineInstructionStep("2", "Нажмите кнопку «📋 Из буфера» для моментального добавления.")
-                                InlineInstructionStep("3", "Нажмите на центральную кнопку питания для активации.")
-                            }
-                        }
-                    }
-
-                    // --- КАРТОЧНЫЙ СПИСОК СЕРВЕРОВ (EASYGO STYLE) ---
+                    // Карточка списка серверов
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(540.dp)
+                            .weight(1f, fill = false)
+                            .heightIn(min = 450.dp)
                             .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                            .background(Color(0xFF131738))
+                            .background(Color(0xFF10132B))
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFF242A5C),
+                                color = Color(0xFF1D224D),
                                 shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
                             )
                     ) {
@@ -385,22 +384,18 @@ fun MainScreen(
                                 selectedGuid = selectedGuid,
                                 doubleColumnDisplay = doubleColumnDisplay,
                                 confirmRemove = confirmRemove,
-                                searchQuery = searchQuery,
+                                searchQuery = "",
                                 lazyListStates = lazyListStates,
                                 lazyGridStates = lazyGridStates,
                                 onSelectServer = { guid -> onAction(MainAction.SelectServer(guid)) },
                                 onEditServer = { guid, profile -> onAction(MainAction.EditServer(guid, profile)) },
-                                onShareServer = { guid, profile ->
-                                    shareTarget = Triple(guid, profile, false)
-                                },
-                                onMoreServer = { guid, profile ->
-                                    shareTarget = Triple(guid, profile, true)
-                                },
+                                onShareServer = { guid, profile -> shareTarget = Triple(guid, profile, false) },
+                                onMoreServer = { guid, profile -> shareTarget = Triple(guid, profile, true) },
                                 onRemoveServer = { guid ->
                                     if (confirmRemove) showRemoveConfirm = guid
                                     else onAction(MainAction.RemoveServer(guid))
                                 },
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 18.dp)
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp)
                             )
                         }
                     }
@@ -411,58 +406,47 @@ fun MainScreen(
 }
 
 @Composable
-private fun CustomActionButton(
+private fun ModernPillButton(
     text: String,
     accentColor: Color,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF171B3E))
-            .border(1.dp, accentColor.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0xFF151838))
+            .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 18.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
             color = Color.White,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold
         )
     }
 }
 
 @Composable
-private fun InlineInstructionStep(number: String, text: String) {
+private fun InstructionItem(num: String, desc: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.Top
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .padding(top = 2.dp)
-                .size(18.dp)
+                .size(24.dp)
                 .background(Color(0xFF3861FB), CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = number,
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = num, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = text,
-            color = Color(0xFFC7CCE6),
-            fontSize = 12.sp,
-            lineHeight = 16.sp
-        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = desc, color = Color(0xFFC3C8E2), fontSize = 13.sp, lineHeight = 18.sp)
     }
 }
 
@@ -477,74 +461,70 @@ fun CyberPowerButton(
         initialValue = 0.98f,
         targetValue = 1.04f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1800, easing = FastOutSlowInEasing),
+            animation = tween(1600, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseScale"
     )
 
     val activeColor = Color(0xFF3861FB)
-    val idleColor = Color(0xFF282D5C)
-    val glowColor = if (isRunning) Color(0xFF3861FB) else Color(0xFF1B1E3D)
+    val glowColor = if (isRunning) Color(0xFF3861FB) else Color(0xFF1E234D)
 
-    val buttonGlowAlpha by animateFloatAsState(
-        targetValue = if (isRunning) 0.6f else 0.25f,
+    val glowAlpha by animateFloatAsState(
+        targetValue = if (isRunning) 0.65f else 0.2f,
         animationSpec = tween(500),
-        label = "buttonGlowAlpha"
+        label = "glowAlpha"
     )
 
     Box(
-        modifier = Modifier.size(240.dp),
+        modifier = Modifier.size(230.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Внешний неоновый ореол (EasyGo Glow)
         Box(
             modifier = Modifier
-                .size(240.dp)
+                .size(230.dp)
                 .scale(if (isRunning) pulseScale else 1f)
                 .clip(CircleShape)
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            glowColor.copy(alpha = buttonGlowAlpha),
-                            glowColor.copy(alpha = buttonGlowAlpha * 0.3f),
+                            glowColor.copy(alpha = glowAlpha),
+                            glowColor.copy(alpha = glowAlpha * 0.25f),
                             Color.Transparent
                         )
                     )
                 )
         )
 
-        // Внешнее кольцо
         Box(
             modifier = Modifier
-                .size(190.dp)
+                .size(180.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color(0xFF232854), Color(0xFF131633))
+                        colors = listOf(Color(0xFF1E234F), Color(0xFF10132B))
                     )
                 )
                 .border(
                     width = 2.dp,
-                    color = if (isRunning) activeColor.copy(alpha = 0.6f) else Color(0xFF272C59),
+                    color = if (isRunning) activeColor.copy(alpha = 0.8f) else Color(0xFF282F66),
                     shape = CircleShape
                 )
         )
 
-        // Центральная кнопка включения
         Box(
             modifier = Modifier
-                .size(135.dp)
+                .size(130.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.verticalGradient(
-                        colors = if (isRunning) listOf(Color(0xFF3861FB), Color(0xFF1F3BB3))
-                        else listOf(Color(0xFF1A1D3B), Color(0xFF0F1124))
+                        colors = if (isRunning) listOf(Color(0xFF3861FB), Color(0xFF1C3DBF))
+                        else listOf(Color(0xFF161938), Color(0xFF0E1024))
                     )
                 )
                 .border(
                     width = 2.dp,
-                    color = if (isRunning) Color(0xFF6C8CFF) else Color(0xFF2C3260),
+                    color = if (isRunning) Color(0xFF7593FF) else Color(0xFF2D356E),
                     shape = CircleShape
                 )
                 .clickable(
@@ -555,12 +535,12 @@ fun CyberPowerButton(
             contentAlignment = Alignment.Center
         ) {
             val iconColor by animateColorAsState(
-                targetValue = if (isRunning) Color.White else Color(0xFF646B96),
+                targetValue = if (isRunning) Color.White else Color(0xFF7B84AC),
                 animationSpec = tween(300),
                 label = "iconColor"
             )
 
-            Canvas(modifier = Modifier.size(46.dp)) {
+            Canvas(modifier = Modifier.size(44.dp)) {
                 drawArc(
                     color = iconColor,
                     startAngle = -60f,
